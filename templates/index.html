@@ -104,57 +104,48 @@ __  ____   _______
 			   .then(response => {
 				   response.text().then(t => { switch(t) {
 								 case "-1":
-								 	x_left.style.transition = "all .2s";
-									x_left.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
-									x_right.style.filter = "";
+								 	x_right.style.visibility = "hidden";
+								 	x_left.style.visibility = "visible";
 									break;
 								 case "1":
-								 	x_right.style.transition = "all .2s";
-									x_right.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
-									x_left.style.filter = "";
+								 	x_left.style.visibility = "hidden";
+								 	x_right.style.visibility = "visible";
 									break;
-
 								 default:
-									x_left.style.filter = "";
-									x_right.style.filter = "";
+ 								 	x_left.style.visibility = "hidden";
+								 	x_right.style.visibility = "hidden";
 									break;
 								}})});
 			fetch("{{ url_for('deltaY_feed') }}")
 			   .then(response => {
 				   response.text().then(t => { switch(t) {
 								 case "1":
-								 	y_up.style.transition = "all .2s";
-									y_up.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
-									y_down.style.filter = "";
+ 									y_down.style.visibility = "hidden";
+									y_up.style.visibility = "visible";
 									break;
 								 case "-1":
-								 	y_down.style.transition = "all .2s";
-									y_down.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
-									y_up.style.filter = "";
+ 									y_up.style.visibility = "hidden";
+									y_down.style.visibility = "visible";
 									break;
-
 								 default:
-									y_up.style.filter = "";
-									y_down.style.filter = "";
+ 									y_down.style.visibility = "hidden";
+									y_up.style.visibility = "hidden";
 									break;
 								}})});
 			fetch("{{ url_for('deltaZ_feed') }}")
 			   .then(response => {
 				   response.text().then(t => { switch(t) {
 								 case "-1":
-								 	z_front.style.transition = "all .2s";
-									z_front.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
-									z_back.style.filter = "";
+									z_front.style.visibility = "hidden";
+									z_back.style.visibility = "visible";
 									break;
 								 case "1":
-								 	z_back.style.transition = "all .2s";
-									z_back.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
-									z_front.style.filter = "";
+									z_back.style.visibility = "hidden";
+									z_front.style.visibility = "visible";
 									break;
-
 								 default:
-									z_front.style.filter = "";
-									z_back.style.filter = "";
+									z_back.style.visibility = "hidden";
+									z_front.style.visibility = "hidden";
 									break;
 								}})});	
 		

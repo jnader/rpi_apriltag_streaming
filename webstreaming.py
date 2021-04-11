@@ -17,7 +17,7 @@ lock = threading.Lock()
 
 app = Flask(__name__)
 
-vs = VideoStream(usePiCamera=1).start()
+vs = VideoStream(usePiCamera=0).start()
 time.sleep(5.0)
 detector = Detector(families='tag36h11', nthreads=2, quad_decimate=3.0, quad_sigma=0.0, refine_edges=1, decode_sharpening=0.25, debug=0)
 
@@ -92,23 +92,23 @@ def detect_tag():
 				ref_Y = y
 				ref_Z = z
 
-			if x - ref_X < 0:
+			if x - ref_X < -0.02:
 				deltaX = -1
-			elif x - ref_X > 0:
+			elif x - ref_X > 0.02:
 				deltaX = 1
 			else:
 				deltaX = 0
 
-			if y - ref_Y < 0:
+			if y - ref_Y < -0.02:
 				deltaY = -1
-			elif y - ref_Y > 0:
+			elif y - ref_Y > 0.02:
 				deltaY = 1
 			else:
 				deltaY = 0
 
-			if z - ref_Z < 0:
+			if z - ref_Z < -0.02:
 				deltaZ = -1
-			elif z - ref_Z > 0:
+			elif z - ref_Z > 0.02:
 				deltaZ = 1
 			else:
 				deltaZ = 0
