@@ -1,0 +1,198 @@
+<!--
+
+__  ____   _______
+\ \/ /\ \ / /__  /
+ \  /  \ V /  / / 
+ /  \   | |  / /_ 
+/_/\_\  |_| /____|
+                                                                                                             
+                        
+-->
+<!DOCTYPE html>
+<html lang="it">
+
+    <head>
+
+        <!-- PAGE TITLE -->
+        <title>XYZ</title>
+
+        <!-- META-TAG -->
+        <meta charset="UTF-8">
+        <meta name="author" content="Lorenzo Cristofori">
+        <meta name="Description" content="XYZ">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
+
+        <!-- STYLE -->
+        <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}">
+        <link rel="shortcut icon" type="image/png" href="{{ url_for('static',filename='media/favicon.ico') }}">
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet"> 
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Work+Sans:wght@400;700&display=swap" rel="stylesheet"> 
+        
+        <!-- SCRIPT -->
+
+        <!-- JQUERY -->
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    
+    </head>
+
+
+    <!-- CONTENT -->
+    <body class="content">
+
+        <div id="reset" class="content__label">
+            <span id="reset1">Reset</span>
+        </div>
+
+
+	<div class="content__image">
+		<img class="content__image-img" src="{{ url_for('video_feed') }}" alt="video">
+		<audio class="content__image-audio" id="audio" src="{{ url_for('static',filename='media/beep.mp3') }}" alt="audio">
+	</div>
+
+        <!-- CIRCLES -->
+        <div class="content__bottom">
+		
+            <!-- X -->
+            <div class="content__bottom--box">
+                <div class="content__bottom--circle">
+                    <span style="font-size: 22px;">LEFT/RIGHT</span> 
+                </div>
+                <div class="content__bottom--arrow">
+                    <img class="content__bottom--box-img" id="left" src="{{ url_for('static',filename='media/arrow.svg') }}" alt="left" style="transform: scale(-1);">
+                    <img class="content__bottom--box-img" id="right" src="{{ url_for('static',filename='media/arrow.svg') }}" alt="right">
+                </div>
+            </div>
+			
+            <!-- Z -->
+            <div class="content__bottom--box">
+                <div class="content__bottom--circle">
+                    <span style="font-size: 22px;">FRONT/BACK</span>
+                </div>
+                <div class="content__bottom--arrow">
+                    <img class="content__bottom--box-img" id="front" src="{{ url_for('static',filename='media/arrow_up.svg') }}" alt="front">
+                    <img class="content__bottom--box-img" id="back" src="{{ url_for('static',filename='media/arrow_down.svg') }}" alt="back">
+                </div>
+            </div>
+			
+            <!-- Y -->
+            <div class="content__bottom--box">
+                <div class="content__bottom--circle">
+                    <span style="font-size: 22px;">UP/DOWN</span>
+                </div>
+                <div class="content__bottom--arrow">
+                    <img class="content__bottom--box-img" id="up" src="{{ url_for('static',filename='media/arrow.svg') }}" alt="up" style="transform: rotate(-90deg);">
+                    <img class="content__bottom--box-img" id="down" src="{{ url_for('static',filename='media/arrow.svg') }}" alt="down" style="transform: rotate(90deg);">
+                </div>
+            </div>
+			
+	</div>
+
+
+	<script>
+		var x_left = document.getElementById("left");
+		var x_right = document.getElementById("right");
+		var z_front = document.getElementById("front");
+		var z_back = document.getElementById("back");
+		var y_up = document.getElementById("up");
+		var y_down = document.getElementById("down");
+		var audio_em = document.getElementById("audio");
+
+		function get_deltas()
+		{
+			fetch("{{ url_for('deltaX_feed') }}")
+			   .then(response => {
+				   response.text().then(t => { switch(t) {
+								 case "-1":
+								 	x_left.style.transition = "all .2s";
+									x_left.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
+									x_right.style.filter = "";
+									break;
+								 case "1":
+								 	x_right.style.transition = "all .2s";
+									x_right.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
+									x_left.style.filter = "";
+									break;
+
+								 default:
+									x_left.style.filter = "";
+									x_right.style.filter = "";
+									break;
+								}})});
+			fetch("{{ url_for('deltaY_feed') }}")
+			   .then(response => {
+				   response.text().then(t => { switch(t) {
+								 case "1":
+								 	y_up.style.transition = "all .2s";
+									y_up.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
+									y_down.style.filter = "";
+									break;
+								 case "-1":
+								 	y_down.style.transition = "all .2s";
+									y_down.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
+									y_up.style.filter = "";
+									break;
+
+								 default:
+									y_up.style.filter = "";
+									y_down.style.filter = "";
+									break;
+								}})});
+			fetch("{{ url_for('deltaZ_feed') }}")
+			   .then(response => {
+				   response.text().then(t => { switch(t) {
+								 case "-1":
+								 	z_front.style.transition = "all .2s";
+									z_front.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
+									z_back.style.filter = "";
+									break;
+								 case "1":
+								 	z_back.style.transition = "all .2s";
+									z_back.style.filter = "invert(60%) sepia(64%) saturate(602%) hue-rotate(71deg) brightness(96%) contrast(87%)";
+									z_front.style.filter = "";
+									break;
+
+								 default:
+									z_front.style.filter = "";
+									z_back.style.filter = "";
+									break;
+								}})});	
+		
+			fetch("{{ url_for('tags_feed') }}")
+			   .then(response => {
+				   response.text().then(t => {if(t == "0") 
+			   				       { audio_em.play(); }
+				   			       else
+				   			       { audio_em.pause(); }
+				   			       })});
+		
+		}
+		
+
+		var timer = setInterval(get_deltas, 100);
+		
+	</script>
+
+	<script>
+		$("#reset").click(function(e) {
+		        data = $("#reset").html();
+		        $.ajax({
+		                type: 'POST',
+		                url: '/reset_feed',
+		                data: {'reset': data},
+		                error: function() {
+		                    alert("Oops! Something went wrong.");
+		                }
+		        });
+        	})  
+	</script>
+
+    </body>
+
+</html>
+<!--
+
+    MADE WITH LOVE BY LORENZO CRISTOFORI
+
+
+-->
