@@ -40,15 +40,14 @@ __  ____   _______
     <!-- CONTENT -->
     <body class="content">
 
-        <div id="reset" class="content__label">
-            <span id="reset1">Reset</span>
+        <div class="content__label">
+            <button id="reset" type="button" class="btn--reset">Reset</button>
         </div>
 
-
-	<div class="content__image">
-		<img class="content__image-img" src="{{ url_for('video_feed') }}" alt="video">
-		<audio class="content__image-audio" id="audio" src="{{ url_for('static',filename='media/beep.mp3') }}" alt="audio">
-	</div>
+        <div class="content__image">
+            <img class="content__image-img" src="{{ url_for('video_feed') }}" alt="video">
+            <audio class="content__image-audio" id="audio" src="{{ url_for('static',filename='media/beep.mp3') }}" alt="audio">
+        </div>
 
         <!-- CIRCLES -->
         <div class="content__bottom">
@@ -88,7 +87,6 @@ __  ____   _______
 			
 	</div>
 
-
 	<script>
 		var x_left = document.getElementById("left");
 		var x_right = document.getElementById("right");
@@ -119,11 +117,11 @@ __  ____   _______
 			fetch("{{ url_for('deltaY_feed') }}")
 			   .then(response => {
 				   response.text().then(t => { switch(t) {
-								 case "1":
+								 case "-1":
  									y_down.style.visibility = "hidden";
 									y_up.style.visibility = "visible";
 									break;
-								 case "-1":
+								 case "1":
  									y_up.style.visibility = "hidden";
 									y_down.style.visibility = "visible";
 									break;
@@ -135,11 +133,11 @@ __  ____   _______
 			fetch("{{ url_for('deltaZ_feed') }}")
 			   .then(response => {
 				   response.text().then(t => { switch(t) {
-								 case "-1":
+								 case "1":
 									z_front.style.visibility = "hidden";
 									z_back.style.visibility = "visible";
 									break;
-								 case "1":
+								 case "-1":
 									z_back.style.visibility = "hidden";
 									z_front.style.visibility = "visible";
 									break;
@@ -147,8 +145,7 @@ __  ____   _______
 									z_back.style.visibility = "hidden";
 									z_front.style.visibility = "hidden";
 									break;
-								}})});	
-		
+								}})});
 			fetch("{{ url_for('tags_feed') }}")
 			   .then(response => {
 				   response.text().then(t => {if(t == "0") 
@@ -156,16 +153,14 @@ __  ____   _______
 				   			       else
 				   			       { audio_em.pause(); }
 				   			       })});
-		
 		}
 		
 
-		var timer = setInterval(get_deltas, 100);
-		
+		var timer = setInterval(get_deltas, 150);
 	</script>
 
 	<script>
-		$("#reset").click(function(e) {
+		$("#reset").on('click', function(e) {
 		        data = $("#reset").html();
 		        $.ajax({
 		                type: 'POST',
@@ -175,9 +170,8 @@ __  ____   _______
 		                    alert("Oops! Something went wrong.");
 		                }
 		        });
-        	})  
+        	})
 	</script>
-
     </body>
 
 </html>

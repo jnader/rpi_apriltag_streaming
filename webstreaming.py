@@ -17,7 +17,7 @@ lock = threading.Lock()
 
 app = Flask(__name__)
 
-vs = VideoStream(usePiCamera=0).start()
+vs = VideoStream(usePiCamera=1).start()
 time.sleep(5.0)
 detector = Detector(families='tag36h11', nthreads=2, quad_decimate=3.0, quad_sigma=0.0, refine_edges=1, decode_sharpening=0.25, debug=0)
 
@@ -59,7 +59,8 @@ def detect_tag():
 		frame = imutils.resize(frame, width=300)
 		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-		results = detector.detect(gray, estimate_tag_pose=True, camera_params=[598.3, 602.1, 312.6, 260], tag_size=0.23)
+		results = detector.detect(gray, estimate_tag_pose=True, camera_params=[K[0,0], K[1,1], K[0,2], K[1,2]], tag_size=0.15)
+		# results = detector.detect(gray, estimate_tag_pose=True, camera_params=[557, 561, 360, 235], tag_size=0.15)
 		nb_tags = len(results)
 
 		for r in results:
@@ -85,38 +86,37 @@ def detect_tag():
 			cv2.line(frame, ref_pt_1, ref_pt_2, (0, 255, 0), 2)
 			cv2.line(frame, ref_pt_3, ref_pt_4, (0, 255, 0), 2)
 
+			# (x,y,z) are the tag's origin position in camera's frame.
+			# Camera's frame being fixed (with Z-axis heading to the tag, Y-axis pointing down),
+			# we can conclude how the camera moved and accordingly how we should get back to reference.
 			(x, y, z) = r.pose_t[0][0], r.pose_t[1][0], r.pose_t[2][0]
+
 			if bool_val == 1:
 				bool_val = 0
 				ref_X = x
 				ref_Y = y
 				ref_Z = z
 
-			if x - ref_X < -0.02:
-				deltaX = -1
-			elif x - ref_X > 0.02:
-				deltaX = 1
+			if x - ref_X < -0.01:
+				deltaX = 1 # Go right. (since the camera is at the back of the car)
+			elif x - ref_X > 0.01:
+				deltaX = -1 # Go left.
 			else:
 				deltaX = 0
 
-			if y - ref_Y < -0.02:
-				deltaY = -1
-			elif y - ref_Y > 0.02:
-				deltaY = 1
+			if y - ref_Y < -0.01:
+				deltaY = -1 # Go up.
+			elif y - ref_Y > 0.01:
+				deltaY = 1 # Go down.
 			else:
 				deltaY = 0
 
-			if z - ref_Z < -0.02:
-				deltaZ = -1
-			elif z - ref_Z > 0.02:
-				deltaZ = 1
+			if z - ref_Z < -0.01:
+				deltaZ = -1 # GO front.
+			elif z - ref_Z > 0.01:
+				deltaZ = 1 # Go back.
 			else:
 				deltaZ = 0
-
-			euler_angles = rotationMatrixToEulerAngles(r.pose_R)
-			roll = euler_angles[0]
-			pitch = euler_angles[1]
-			yaw = euler_angles[2]
 
 		with lock:
 			outputFrame = frame.copy()
@@ -177,6 +177,7 @@ def reset_feed():
 	ref_X = x
 	ref_Y = y
 	ref_Z = z
+	
 	viz_x = cX
 	viz_y = cY
 
