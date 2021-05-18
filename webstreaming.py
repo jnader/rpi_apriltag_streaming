@@ -17,20 +17,20 @@ lock = threading.Lock()
 
 app = Flask(__name__)
 
-vs = VideoStream(usePiCamera=1).start()
+vs = VideoStream(usePiCamera=0).start()
 time.sleep(5.0)
 detector = Detector(families='tag36h11', nthreads=2, quad_decimate=3.0, quad_sigma=0.0, refine_edges=1, decode_sharpening=0.25, debug=0)
 
 K = np.float32([[614.27570785, 0., 312.01281694], [  0., 612.71902074, 248.9632528 ],[  0., 0., 1. ]]).reshape(-1,3)
 distCoeffs = np.float32([[ 3.09492088e-01, -2.18913647e+00, -6.12897025e-04,  2.83006079e-03]])
 
-ref_X, ref_Y, ref_Z = 0, 0, 0
+ref_ptA, ref_ptB, ref_ptC, ref_ptD = 0, 0, 0, 0
+ref_Z = 0
+ref_cX, ref_cY = 0, 0
 deltaX, deltaY, deltaZ = 0, 0, 0
 x, y, z = 0, 0, 0
 bool_val = 1
 cX, cY = 0, 0
-
-viz_x, viz_y = 0, 0 # For visualization of saved center
 
 @app.route("/")
 def index():
@@ -52,61 +52,65 @@ def rotationMatrixToEulerAngles(R):
 	return [math.degrees(x), math.degrees(y), math.degrees(z)]
 
 def detect_tag():
-	global vs, outputFrame, lock, nb_tags, ref_X, ref_Y, ref_Z, deltaX, deltaY, deltaZ, bool_val, x, y, z, cX, cY, viz_x, viz_y
+	global vs, outputFrame, lock, nb_tags, ref_Z, z, ref_ptA, ptA, ref_ptB, ptB, ref_ptC, ptC, ref_ptD, ptD, ref_cX, cX, ref_cY, cY, deltaX, deltaY, deltaZ, bool_val
 
 	while True:
 		frame = vs.read()
 		frame = imutils.resize(frame, width=300)
 		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-		results = detector.detect(gray, estimate_tag_pose=True, camera_params=[K[0,0], K[1,1], K[0,2], K[1,2]], tag_size=0.15)
-		# results = detector.detect(gray, estimate_tag_pose=True, camera_params=[557, 561, 360, 235], tag_size=0.15)
+		# results = detector.detect(gray, estimate_tag_pose=True, camera_params=[K[0,0], K[1,1], K[0,2], K[1,2]], tag_size=0.15)
+		results = detector.detect(gray, estimate_tag_pose=True, camera_params=[557, 561, 360, 235], tag_size=0.15)
 		nb_tags = len(results)
 
 		for r in results:
+			# Get tag's corners.
 			(ptA, ptB, ptC, ptD) = r.corners
 			ptB = (int(ptB[0]), int(ptB[1]))
 			ptC = (int(ptC[0]), int(ptC[1]))
 			ptD = (int(ptD[0]), int(ptD[1]))
 			ptA = (int(ptA[0]), int(ptA[1]))
 
+			# Draw current corners.
 			cv2.line(frame, ptA, ptB, (0, 255, 0), 2)
 			cv2.line(frame, ptB, ptC, (0, 255, 0), 2)
 			cv2.line(frame, ptC, ptD, (0, 255, 0), 2)
 			cv2.line(frame, ptD, ptA, (0, 255, 0), 2)
 
+			if bool_val == 1:
+				bool_val = 0
+				ref_ptA = ptA
+				ref_ptB = ptB
+				ref_ptC = ptC
+				ref_ptD = ptD
+				ref_cX  = cX
+				ref_cY  = cY
+
+			# Draw desired corners.
+			cv2.line(frame, ref_ptA, ref_ptB, (0, 0, 255), 2)
+			cv2.line(frame, ref_ptB, ref_ptC, (0, 0, 255), 2)
+			cv2.line(frame, ref_ptC, ref_ptD, (0, 0, 255), 2)
+			cv2.line(frame, ref_ptD, ref_ptA, (0, 0, 255), 2)
+
+			# Get & draw current tag center.
 			(cX, cY) = (int(r.center[0]), int(r.center[1]))
 			cv2.circle(frame, (cX, cY), 5, (0, 0, 255), -1)
-
-			ref_pt_1 = (viz_x, 0)
-			ref_pt_2 = (viz_x, 300)
-			ref_pt_3 = (0, viz_y)
-			ref_pt_4 = (300, viz_y)
-
-			cv2.line(frame, ref_pt_1, ref_pt_2, (0, 255, 0), 2)
-			cv2.line(frame, ref_pt_3, ref_pt_4, (0, 255, 0), 2)
 
 			# (x,y,z) are the tag's origin position in camera's frame.
 			# Camera's frame being fixed (with Z-axis heading to the tag, Y-axis pointing down),
 			# we can conclude how the camera moved and accordingly how we should get back to reference.
-			(x, y, z) = r.pose_t[0][0], r.pose_t[1][0], r.pose_t[2][0]
+			z =r.pose_t[2][0]
 
-			if bool_val == 1:
-				bool_val = 0
-				ref_X = x
-				ref_Y = y
-				ref_Z = z
-
-			if x - ref_X < -0.01:
+			if cX - ref_cX < -5:
 				deltaX = 1 # Go right. (since the camera is at the back of the car)
-			elif x - ref_X > 0.01:
+			elif cX - ref_cX > 5:
 				deltaX = -1 # Go left.
 			else:
 				deltaX = 0
 
-			if y - ref_Y < -0.01:
+			if cY - ref_cY < -5:
 				deltaY = -1 # Go up.
-			elif y - ref_Y > 0.01:
+			elif cY - ref_cY > 5:
 				deltaY = 1 # Go down.
 			else:
 				deltaY = 0
@@ -171,15 +175,16 @@ def deltaZ_feed():
 
 @app.route("/reset_feed", methods=['GET','POST'])
 def reset_feed():
-	global ref_X, ref_Y, ref_Z, x, y, z, viz_x, viz_y, cX, cY
+	global ref_Z, z, ref_ptA, ptA, ref_ptB, ptB, ref_ptC, ptC, ref_ptD, ptD, ref_cX, ref_cY, cX, cY
 
 	data = request.form['reset']
-	ref_X = x
-	ref_Y = y
-	ref_Z = z
-	
-	viz_x = cX
-	viz_y = cY
+	ref_ptA = ptA
+	ref_ptB = ptB
+	ref_ptC = ptC
+	ref_ptD = ptD
+	ref_cX  = cX
+	ref_cY  = cY
+	ref_Z   = z
 
 	return ('', 200)
 
