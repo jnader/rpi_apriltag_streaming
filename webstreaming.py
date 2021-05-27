@@ -10,7 +10,24 @@ import time
 import math
 import numpy as np
 import cv2
+import json
 from pupil_apriltags import Detector
+
+filename = "desired_tag.txt" # This text file is used to store desired tag's corners when reset is pressed.
+
+with open(filename) as json_file:
+	data = json.load(json_file)
+	for p in data['corners']:
+		ref_ptA = p['ptA']
+		print(ref_ptA)
+		ref_ptB = p['ptB']
+		ref_ptC = p['ptC']
+		ref_ptD = p['ptD']
+	for p in data['center']:
+		ref_cX = p['cX']
+		ref_cY = p['cY']
+	for p in data['depth']:
+		ref_Z = p['z']
 
 outputFrame = None
 lock = threading.Lock()
@@ -24,9 +41,6 @@ detector = Detector(families='tag36h11', nthreads=2, quad_decimate=3.0, quad_sig
 K = np.float32([[614.27570785, 0., 312.01281694], [  0., 612.71902074, 248.9632528 ],[  0., 0., 1. ]]).reshape(-1,3)
 distCoeffs = np.float32([[ 3.09492088e-01, -2.18913647e+00, -6.12897025e-04,  2.83006079e-03]])
 
-ref_ptA, ref_ptB, ref_ptC, ref_ptD = 0, 0, 0, 0
-ref_Z = 0
-ref_cX, ref_cY = 0, 0
 deltaX, deltaY, deltaZ = 0, 0, 0
 x, y, z = 0, 0, 0
 bool_val = 1
@@ -77,20 +91,20 @@ def detect_tag():
 			cv2.line(frame, ptC, ptD, (0, 255, 0), 2)
 			cv2.line(frame, ptD, ptA, (0, 255, 0), 2)
 
-			if bool_val == 1:
-				bool_val = 0
-				ref_ptA = ptA
-				ref_ptB = ptB
-				ref_ptC = ptC
-				ref_ptD = ptD
-				ref_cX  = cX
-				ref_cY  = cY
+			# if bool_val == 1:
+			# 	bool_val = 0
+			# 	ref_ptA = ptA
+			# 	ref_ptB = ptB
+			# 	ref_ptC = ptC
+			# 	ref_ptD = ptD
+			# 	ref_cX  = cX
+			# 	ref_cY  = cY
 
 			# Draw desired corners.
-			cv2.line(frame, ref_ptA, ref_ptB, (0, 0, 255), 2)
-			cv2.line(frame, ref_ptB, ref_ptC, (0, 0, 255), 2)
-			cv2.line(frame, ref_ptC, ref_ptD, (0, 0, 255), 2)
-			cv2.line(frame, ref_ptD, ref_ptA, (0, 0, 255), 2)
+			cv2.line(frame, tuple(ref_ptA), tuple(ref_ptB), (0, 0, 255), 2)
+			cv2.line(frame, tuple(ref_ptB), tuple(ref_ptC), (0, 0, 255), 2)
+			cv2.line(frame, tuple(ref_ptC), tuple(ref_ptD), (0, 0, 255), 2)
+			cv2.line(frame, tuple(ref_ptD), tuple(ref_ptA), (0, 0, 255), 2)
 
 			# Get & draw current tag center.
 			(cX, cY) = (int(r.center[0]), int(r.center[1]))
@@ -99,7 +113,7 @@ def detect_tag():
 			# (x,y,z) are the tag's origin position in camera's frame.
 			# Camera's frame being fixed (with Z-axis heading to the tag, Y-axis pointing down),
 			# we can conclude how the camera moved and accordingly how we should get back to reference.
-			z =r.pose_t[2][0]
+			z = r.pose_t[2][0]
 
 			if cX - ref_cX < -5:
 				deltaX = 1 # Go right. (since the camera is at the back of the car)
@@ -175,7 +189,7 @@ def deltaZ_feed():
 
 @app.route("/reset_feed", methods=['GET','POST'])
 def reset_feed():
-	global ref_Z, z, ref_ptA, ptA, ref_ptB, ptB, ref_ptC, ptC, ref_ptD, ptD, ref_cX, ref_cY, cX, cY
+	global filename, ref_Z, z, ref_ptA, ptA, ref_ptB, ptB, ref_ptC, ptC, ref_ptD, ptD, ref_cX, ref_cY, cX, cY
 
 	data = request.form['reset']
 	ref_ptA = ptA
@@ -185,6 +199,32 @@ def reset_feed():
 	ref_cX  = cX
 	ref_cY  = cY
 	ref_Z   = z
+
+	# Saving desired tag's corners in `desired_tag.txt` file.
+	# file1 = open(filename, "w")
+	# L = [str(ref_ptA)+"\n", str(ref_ptB)+"\n", str(ref_ptC)+"\n", str(ref_ptD)+"\n"]
+	# file1.writelines(L)
+
+	data = {}
+	data['center'] = []
+	data['corners'] = []
+	data['depth'] = []
+	data['corners'].append({
+		'ptA': ref_ptA,
+		'ptB': ref_ptB,
+		'ptC': ref_ptC,
+		'ptD': ref_ptD
+	})
+	data['center'].append({
+		'cX': ref_cX,
+		'cY': ref_cY
+	})
+	data['depth'].append({
+		'z': ref_Z
+	})
+
+	with open(filename, 'w') as outfile:
+		json.dump(data, outfile)
 
 	return ('', 200)
 
