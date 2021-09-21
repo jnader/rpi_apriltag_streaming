@@ -40,12 +40,12 @@ __  ____   _______
     <!-- CONTENT -->
     <body class="content">
 
-        <div class="content__label">
-            <button id="reset" type="button" class="btn--reset">Reset</button>
-        </div>
+        <!-- <div class="content__label">
+            <button type="button" class="btn--reset">Reset</button>
+        </div> -->
 
         <div class="content__image">
-            <img class="content__image-img" src="{{ url_for('video_feed') }}" alt="video">
+            <img id="reset" class="content__image-img" src="{{ url_for('video_feed') }}" alt="video">
             <audio class="content__image-audio" id="audio" src="{{ url_for('static',filename='media/beep.mp3') }}" alt="audio">
         </div>
 
